@@ -1,63 +1,40 @@
 import os
-import pickle
+import json
 
-# セキュリティ問題: ハードコードされた認証情報
-API_KEY = "sk-1234567890abcdef"
-PASSWORD = "admin123"
+# 修正: 環境変数から取得
+API_KEY = os.environ.get('API_KEY')
+PASSWORD = os.environ.get('PASSWORD')
 
-def unsafe_deserialize(data):
-    # セキュリティ問題: 安全でないデシリアライゼーション
-    return pickle.loads(data)
+def safe_deserialize(data):
+    # 修正: JSONを使用
+    return json.loads(data)
 
-def sql_injection_vulnerable(user_input):
-    # セキュリティ問題: SQLインジェクション
-    query = "SELECT * FROM users WHERE name = '" + user_input + "'"
-    return query
+def safe_query(user_input, cursor):
+    # 修正: パラメータ化クエリ
+    query = "SELECT * FROM users WHERE name = ?"
+    return cursor.execute(query, (user_input,))
 
-def unused_variable_example():
-    # コード品質問題: 未使用変数
+def simple_example():
+    # 修正: 未使用変数を削除
     x = 10
     y = 20
-    z = 30
     return x + y
 
-def complex_function(a, b, c, d, e, f):
-    # コード品質問題: 複雑度が高い
-    if a > 0:
-        if b > 0:
-            if c > 0:
-                if d > 0:
-                    if e > 0:
-                        if f > 0:
-                            return a + b + c + d + e + f
-                        else:
-                            return a + b + c + d + e
-                    else:
-                        return a + b + c + d
-                else:
-                    return a + b + c
-            else:
-                return a + b
-        else:
-            return a
-    else:
-        return 0
+def simple_function(values):
+    # 修正: 複雑度を下げる
+    if all(v > 0 for v in values):
+        return sum(values)
+    return sum(v for v in values if v > 0)
+
+def calculate_sum():
+    # 修正: 重複コードを共通化
+    result = 0
+    for i in range(10):
+        result += i * 2
+    return result
 
 def duplicate_code_1():
-    # コード品質問題: 重複コード
-    result = 0
-    for i in range(10):
-        result += i * 2
-    return result
+    return calculate_sum()
 
 def duplicate_code_2():
-    # コード品質問題: 重複コード
-    result = 0
-    for i in range(10):
-        result += i * 2
-    return result
-
-# コード品質問題: デッドコード
-def never_called_function():
-    print("This is never called")
-    return None
+    return calculate_sum()
