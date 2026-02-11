@@ -1,0 +1,48 @@
+stages:
+  - test
+  - sonarqube
+
+sonarqube-check:
+  stage: sonarqube
+  image: 
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+    GIT_DEPTH: "0"  # 全履歴取得
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script: 
+    - sonar-scanner
+      -Dsonar.projectKey=${CI_PROJECT_NAME}
+      -Dsonar.sources=.
+      -Dsonar.host.url=${SONAR_HOST_URL}
+      -Dsonar.login=${SONAR_TOKEN}
+  allow_failure: false
+  only:
+    - merge_requests
+    - main
+    - develop
+
+# Quality Gateのチェック
+sonarqube-quality-gate:
+  stage: sonarqube
+  image: curlimages/curl:latest
+  script:
+    - |
+      status=$(curl -s -u ${SONAR_TOKEN}: \
+        "${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=${CI_PROJECT_NAME}" \
+        | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+      echo "Quality Gate status: $status"
+      if [ "$status" != "OK" ]; then
+        echo "Quality Gate failed!"
+        exit 1
+      fi
+  dependencies:
+    - sonarqube-check
+  only:
+    - merge_requests
+    - main
+    - develop
